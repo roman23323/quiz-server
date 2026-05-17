@@ -74,6 +74,8 @@ model QuizQuestion {
   text           String
   questionType   QuestionType @map("question_type")
 
+  correctAnswer  String? @map("correct_answer")
+
   points         Int
   orderIndex     Int @map("order_index")
 
