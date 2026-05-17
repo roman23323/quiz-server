@@ -1,13 +1,197 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+enum QuizVisibility {
+  public
+  private
+  unlisted
+}
+
+enum QuestionType {
+  single_choice
+  text
+}
+
+enum SessionMode {
+  solo
+  leaderboard
+  live_tournament
+}
+
+enum SessionStatus {
+  waiting
+  active
+  finished
+  cancelled
+}
+
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  name          String   @unique
+  passwordHash  String   @map("password_hash")
+  isGuest       Boolean  @default(false) @map("is_guest")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  quizzes            Quiz[]
+  hostedSessions     QuizSession[]
+  participations     SessionParticipant[]
+  leaderboardEntries QuizLeaderboard[]
+
+  @@map("users")
+}
+
+model Quiz {
+  id                  String           @id @default(uuid()) @db.Uuid
+  authorId            String           @map("author_id") @db.Uuid
+
+  title               String
+  description         String?
+  visibility          QuizVisibility
+
+  secondsPerQuestion  Int @map("seconds_per_question")
+
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  author              User @relation(fields: [authorId], references: [id])
+
+  questions           QuizQuestion[]
+  sessions            QuizSession[]
+  leaderboards        QuizLeaderboard[]
+
+  @@map("quizzes")
+}
+
+model QuizQuestion {
+  id             String       @id @default(uuid()) @db.Uuid
+  quizId         String       @map("quiz_id") @db.Uuid
+
+  text           String
+  questionType   QuestionType @map("question_type")
+
+  points         Int
+  orderIndex     Int @map("order_index")
+
+  quiz           Quiz @relation(fields: [quizId], references: [id])
+
+  options         QuestionOption[]
+  answers         ParticipantAnswer[]
+
+  @@map("quiz_questions")
+}
+
+model QuestionOption {
+  id            String @id @default(uuid()) @db.Uuid
+  questionId    String @map("question_id") @db.Uuid
+
+  text          String
+  isCorrect     Boolean @default(false) @map("is_correct")
+
+  orderIndex    Int @map("order_index")
+
+  question      QuizQuestion @relation(fields: [questionId], references: [id])
+
+  selectedAnswers ParticipantAnswer[]
+
+  @@map("question_options")
+}
+
+model QuizSession {
+  id                    String          @id @default(uuid()) @db.Uuid
+
+  quizId                String          @map("quiz_id") @db.Uuid
+  hostUserId            String          @map("host_user_id") @db.Uuid
+
+  mode                  SessionMode
+  status                SessionStatus
+
+  accessCode            String? @map("access_code")
+
+  currentQuestionIndex  Int? @map("current_question_index")
+
+  startedAt             DateTime? @map("started_at")
+  endedAt               DateTime? @map("ended_at")
+
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  quiz                  Quiz @relation(fields: [quizId], references: [id])
+  hostUser              User @relation(fields: [hostUserId], references: [id])
+
+  participants          SessionParticipant[]
+
+  @@map("quiz_sessions")
+}
+
+model SessionParticipant {
+  id              String @id @default(uuid()) @db.Uuid
+
+  sessionId       String @map("session_id") @db.Uuid
+  userId          String @map("user_id") @db.Uuid
+
+  joinedAt        DateTime @default(now()) @map("joined_at")
+
+  isConnected     Boolean @default(true) @map("is_connected")
+
+  finalScore      Int @default(0) @map("final_score")
+  finalPlace      Int? @map("final_place")
+
+  finishedAt      DateTime? @map("finished_at")
+
+  session         QuizSession @relation(fields: [sessionId], references: [id])
+  user            User @relation(fields: [userId], references: [id])
+
+  answers         ParticipantAnswer[]
+
+  @@map("session_participants")
+}
+
+model ParticipantAnswer {
+  id                  String @id @default(uuid()) @db.Uuid
+
+  participantId       String @map("participant_id") @db.Uuid
+  questionId          String @map("question_id") @db.Uuid
+
+  selectedOptionId    String? @map("selected_option_id") @db.Uuid
+  textAnswer          String? @map("text_answer")
+
+  isCorrect           Boolean @map("is_correct")
+
+  earnedPoints        Int @map("earned_points")
+
+  answeredAt          DateTime @default(now()) @map("answered_at")
+  responseTimeMs      Int @map("response_time_ms")
+
+  participant         SessionParticipant @relation(fields: [participantId], references: [id])
+
+  question            QuizQuestion @relation(fields: [questionId], references: [id])
+
+  selectedOption      QuestionOption? @relation(fields: [selectedOptionId], references: [id])
+
+  @@map("participant_answers")
+}
+
+model QuizLeaderboard {
+  id              String @id @default(uuid()) @db.Uuid
+
+  quizId          String @map("quiz_id") @db.Uuid
+  userId          String @map("user_id") @db.Uuid
+
+  bestScore       Int @map("best_score")
+  bestTimeMs      Int? @map("best_time_ms")
+
+  attemptsCount   Int @default(0) @map("attempts_count")
+
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  quiz            Quiz @relation(fields: [quizId], references: [id])
+  user            User @relation(fields: [userId], references: [id])
+
+  @@unique([quizId, userId])
+
+  @@map("quiz_leaderboards")
 }
