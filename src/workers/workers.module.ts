@@ -50,7 +50,7 @@ export class WorkersModule implements OnModuleInit {
             },
             {
                 connection: {
-                    host: this.configService.get('REDIS_URL'),
+                    host: this.configService.get('REDIS_HOST'),
                     port: this.configService.get('REDIS_PORT')
                 }
             }

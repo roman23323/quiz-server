@@ -17,7 +17,7 @@ import { AiModule } from './ai/ai.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env'
+      ignoreEnvFile: true
     }),
     JwtModule.registerAsync({
       global: true,
@@ -34,7 +34,7 @@ import { AiModule } from './ai/ai.module';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         connection: {
-          host: configService.get('REDIS_URL'),
+          host: configService.get('REDIS_HOST'),
           port: configService.get('REDIS_PORT')
         }
       })

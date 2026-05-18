@@ -1,7 +1,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import GigaChat from 'gigachat';
-import { QuizzesService } from 'src/quizzes/quizzes.service';
+import { QuizzesService } from '../quizzes/quizzes.service';
 
 @Injectable()
 export class AiService implements OnModuleInit {
