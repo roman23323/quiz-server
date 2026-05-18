@@ -13,9 +13,6 @@ export class AiService implements OnModuleInit {
     ) { }
 
     onModuleInit() {
-        console.log(this.configService.getOrThrow('GIGACHAT_AUTH_KEY'));
-        console.log(this.configService.getOrThrow('GIGACHAT_SCOPE'));
-        console.log(this.configService.getOrThrow('GIGACHAT_MODEL'));
         this.gigachat = new GigaChat({
             credentials: this.configService.getOrThrow('GIGACHAT_AUTH_KEY'),
             scope: this.configService.getOrThrow('GIGACHAT_SCOPE'),
