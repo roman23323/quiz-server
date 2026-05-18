@@ -1,0 +1,25 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+
+  processor: "./fuzz-functions.js"
+
+scenarios:
+  - name: "Fuzz Auth + Quiz endpoints"
+    flow:
+      - function: "generateRegisterData"
+      - post:
+          url: "/auth/register"
+          json: "{{ registerPayload }}"
+
+      - function: "generateLoginData"
+      - post:
+          url: "/auth/login"
+          json: "{{ loginPayload }}"
+
+      - function: "generateQuizData"
+      - post:
+          url: "/quizzes"
+          json: "{{ quizPayload }}"
