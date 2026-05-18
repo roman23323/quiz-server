@@ -1,14 +1,21 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import GigaChat from 'gigachat';
+import { QuizzesService } from 'src/quizzes/quizzes.service';
 
 @Injectable()
 export class AiService implements OnModuleInit {
     private gigachat: GigaChat;
 
-    constructor(private readonly configService: ConfigService) {}
+    constructor(
+        private readonly configService: ConfigService,
+        private readonly quizzesService: QuizzesService
+    ) { }
 
     onModuleInit() {
+        console.log(this.configService.getOrThrow('GIGACHAT_AUTH_KEY'));
+        console.log(this.configService.getOrThrow('GIGACHAT_SCOPE'));
+        console.log(this.configService.getOrThrow('GIGACHAT_MODEL'));
         this.gigachat = new GigaChat({
             credentials: this.configService.getOrThrow('GIGACHAT_AUTH_KEY'),
             scope: this.configService.getOrThrow('GIGACHAT_SCOPE'),
@@ -27,6 +34,7 @@ export class AiService implements OnModuleInit {
 - Без markdown, без пояснений
 - 4 варианта ответа на каждый вопрос
 - Один правильный ответ
+- "questionType" ТОЛЬКО "single_choice",
 
 Формат:
 {
@@ -34,7 +42,7 @@ export class AiService implements OnModuleInit {
     "title": "Тест",
     "description": "",
     "visibility": "public",
-    "secondsPerQuestion": 200
+    "secondsPerQuestion": 10
   },
   "questions": [
     {
@@ -52,7 +60,6 @@ export class AiService implements OnModuleInit {
   ]
 }
         `;
-
         const response = await this.gigachat.chat({
             messages: [
                 {
@@ -68,18 +75,81 @@ export class AiService implements OnModuleInit {
             throw new Error('Empty response from GigaChat');
         }
 
-        content = content
+        const cleaned = content
             .replace(/```json/g, '')
             .replace(/```/g, '')
             .trim();
 
-        try {
-            const parsed = JSON.parse(content);
-            return parsed;
-        } catch (e) {
-            throw new Error(
-                `Failed to parse GigaChat response as JSON: ${content}`,
+        return this.retry(
+            async () => {
+                return JSON.parse(cleaned);
+            },
+            3,
+            200,
+            'parse-gigachat-json',
+        );
+    }
+
+    async generateAndSaveQuiz(topic: string, userId: string) {
+        const aiResult = await this.generateQuiz(topic);
+
+        const { settings, questions } = aiResult;
+
+        const quiz = await this.quizzesService.create(userId, {
+            title: settings.title,
+            description: settings.description,
+            visibility: settings.visibility,
+            secondsPerQuestion: settings.secondsPerQuestion,
+        });
+
+        for (const q of questions) {
+            await this.retry(
+                async () => {
+                    return this.quizzesService.addQuestion(
+                        quiz.id,
+                        userId,
+                        {
+                            text: q.text,
+                            questionType: q.questionType,
+                            points: q.points,
+                            orderIndex: q.orderIndex,
+                            options: q.options,
+                        },
+                    );
+                },
+                3,
+                200,
+                `add-question-${q.orderIndex}`,
             );
         }
+
+        return quiz;
+    }
+
+    private async retry<T>(
+        fn: () => Promise<T>,
+        retries = 3,
+        delayMs = 300,
+        label = 'operation',
+    ): Promise<T> {
+        let lastError: any;
+
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                return await fn();
+            } catch (e) {
+                lastError = e;
+
+                console.warn(
+                    `[AI retry] ${label} failed (attempt ${attempt}/${retries})`,
+                );
+
+                if (attempt < retries) {
+                    await new Promise((res) => setTimeout(res, delayMs));
+                }
+            }
+        }
+
+        throw lastError;
     }
 }
