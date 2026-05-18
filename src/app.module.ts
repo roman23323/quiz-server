@@ -11,6 +11,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { RedisModule } from './redis/redis.module';
 import { BullModule } from '@nestjs/bullmq';
 import { WorkersModule } from './workers/workers.module';
+import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [
@@ -44,7 +45,8 @@ import { WorkersModule } from './workers/workers.module';
     QuizzesModule,
     SessionsModule,
     RedisModule,
-    WorkersModule
+    WorkersModule,
+    AiModule
   ],
   controllers: [AppController],
   providers: [AppService],
