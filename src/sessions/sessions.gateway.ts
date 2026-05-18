@@ -120,6 +120,7 @@ export class SessionsGateway {
         @ConnectedSocket() client: Socket
     ) {
         const user = client.data.user;
+        console.log("HANDLE ANSWER");
 
         const result =
             await this.sessionsService.submitAnswer(
@@ -138,39 +139,6 @@ export class SessionsGateway {
             .emit('session:player-answered', {
                 userId: user.sub,
             });
-
-        const shouldAdvance =
-            await this.sessionsService
-                .shouldAdvanceQuestion(
-                    data.sessionId,
-                    data.dto.questionId,
-                );
-
-        if (shouldAdvance) {
-            const progression =
-                await this.sessionsService
-                    .advanceSessionQuestion(
-                        data.sessionId,
-                    );
-
-            if (progression.finished) {
-                this.server
-                    .to(data.sessionId)
-                    .emit('session:finished');
-
-                return;
-            }
-
-            const question =
-                await this.sessionsService
-                    .getCurrentQuestionForSession(
-                        data.sessionId,
-                    );
-
-            this.server
-                .to(data.sessionId)
-                .emit('session:question', question);
-        }
     }
 
     @SubscribeMessage('session:next-question')
