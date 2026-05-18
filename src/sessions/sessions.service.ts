@@ -19,11 +19,15 @@ import {
     SessionStatus,
 } from '@prisma/client';
 import { SubmitAnswerDto } from './dto/submit-answer.dto';
+import { Queue } from 'bullmq';
+import { InjectQueue } from '@nestjs/bullmq';
 
 @Injectable()
 export class SessionsService {
     constructor(
         private readonly prisma: PrismaService,
+        @InjectQueue('session-queue')
+        private readonly sessionQueue: Queue
     ) { }
 
     async createSession(
@@ -985,6 +989,14 @@ export class SessionsService {
                     },
                 },
             });
+
+        if (answersCount >= participantsCount) {
+            await this.sessionQueue.add(
+                'advance-question',
+                { sessionId },
+                { delay: 0 },
+            );
+        }
         return answersCount >= participantsCount;
     }
 
@@ -992,5 +1004,19 @@ export class SessionsService {
         return str
             .trim()
             .toLowerCase();
+    }
+
+    async scheduleNextQuestion(sessionId: string, delayMs: number) {
+        await this.sessionQueue.add(
+            'advance-question',
+            {
+                sessionId,
+            },
+            {
+                delay: delayMs,
+                removeOnComplete: true,
+                removeOnFail: true,
+            },
+        );
     }
 }

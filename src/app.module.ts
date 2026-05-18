@@ -9,6 +9,8 @@ import { QuizzesModule } from './quizzes/quizzes.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { JwtModule } from '@nestjs/jwt';
 import { RedisModule } from './redis/redis.module';
+import { BullModule } from '@nestjs/bullmq';
+import { WorkersModule } from './workers/workers.module';
 
 @Module({
   imports: [
@@ -26,12 +28,23 @@ import { RedisModule } from './redis/redis.module';
         }
       })
     }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          host: configService.get('REDIS_URL'),
+          port: configService.get('REDIS_PORT')
+        }
+      })
+    }),
     PrismaModule,
     AuthModule,
     UsersModule,
     QuizzesModule,
     SessionsModule,
-    RedisModule
+    RedisModule,
+    WorkersModule
   ],
   controllers: [AppController],
   providers: [AppService],

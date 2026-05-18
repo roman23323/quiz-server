@@ -82,6 +82,11 @@ export class SessionsGateway {
             .to(data.sessionId)
             .emit('session:question', question);
 
+        await this.sessionsService.scheduleNextQuestion(
+            data.sessionId,
+            question.timing.secondsPerQuestion * 1000,
+        );
+
         return {
             ok: true,
         };
