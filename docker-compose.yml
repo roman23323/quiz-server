@@ -13,3 +13,19 @@ services:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+  server:
+    image: quiz-server # Локально собранный из Dockerfile сервер
+    environment:
+      - DATABASE_URL=postgres://test_user:test_password@db:5432/test_db
+      - REDIS_PORT=6379
+      - REDIS_HOST=redis
+      - JWT_SECRET=0eb681063b16c2f2ab6b6806d4804e1047f4492911fd5d79cb740f2deaaba7cd
+      - JWT_EXPIRES_IN=7Day
+      - GIGACHAT_AUTH_KEY=MDE5YWU2NmEtZDRmNC03OTI4LTlkYmYtY2QzM2E0MWM4ZGNmOjE4M2Y1ZDE5LTlhMGItNDQ5NS1iYWJjLWQyYWQ1MjM1M2M0NA==
+      - GIGACHAT_SCOPE=GIGACHAT_API_PERS
+      - GIGACHAT_MODEL=GigaChat-2
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+      - redis
