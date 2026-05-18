@@ -38,7 +38,7 @@ export class SessionsController {
         @CurrentUser() user,
         @Param('id') sessionId: string,
     ) {
-        return this.sessionsService.getCurrentQuestion(
+        return this.sessionsService.getCurrentQuestionForPlayer(
             user.id,
             sessionId,
         );
@@ -65,6 +65,18 @@ export class SessionsController {
         @Param('id') sessionId: string,
     ) {
         return this.sessionsService.getResult(
+            user.id,
+            sessionId,
+        );
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get(':id/leaderboard')
+    getLeaderboard(
+        @CurrentUser() user,
+        @Param('id') sessionId: string,
+    ) {
+        return this.sessionsService.getLeaderboard(
             user.id,
             sessionId,
         );

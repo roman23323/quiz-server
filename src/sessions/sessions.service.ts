@@ -1,5 +1,6 @@
 import {
     BadRequestException,
+    ForbiddenException,
     Injectable,
     NotFoundException,
 } from '@nestjs/common';
@@ -29,12 +30,6 @@ export class SessionsService {
         userId: string,
         dto: CreateSessionDto,
     ) {
-        if (dto.mode !== SessionMode.solo) {
-            throw new BadRequestException(
-                'Only solo mode is currently supported',
-            );
-        }
-
         const quiz = await this.prisma.quiz.findUnique({
             where: {
                 id: dto.quizId,
@@ -68,8 +63,8 @@ export class SessionsService {
             );
         }
 
-        const session =
-            await this.prisma.quizSession.create({
+        if (dto.mode === SessionMode.solo) {
+            return this.prisma.quizSession.create({
                 data: {
                     quizId: quiz.id,
 
@@ -94,11 +89,47 @@ export class SessionsService {
                     participants: true,
                 },
             });
+        }
 
-        return session;
+        if (
+            dto.mode === SessionMode.live_tournament
+        ) {
+            const accessCode =
+                Math.floor(
+                    100000 + Math.random() * 900000,
+                ).toString();
+
+            return this.prisma.quizSession.create({
+                data: {
+                    quizId: quiz.id,
+
+                    hostUserId: userId,
+
+                    mode: SessionMode.live_tournament,
+
+                    status: SessionStatus.waiting,
+
+                    accessCode,
+
+                    participants: {
+                        create: {
+                            userId,
+                        },
+                    },
+                },
+
+                include: {
+                    participants: true,
+                },
+            });
+        }
+
+        throw new BadRequestException(
+            'Unsupported session mode',
+        );
     }
 
-    async getCurrentQuestion(
+    async getCurrentQuestionForPlayer(
         userId: string,
         sessionId: string,
     ) {
@@ -135,6 +166,7 @@ export class SessionsService {
         );
 
         if (!participant) {
+            console.log('Сессия не запущена');
             throw new BadRequestException(
                 'You are not a participant of this session',
             );
@@ -154,6 +186,88 @@ export class SessionsService {
         if (!question) {
             throw new BadRequestException(
                 'No more questions',
+            );
+        }
+
+        return {
+            sessionId: session.id,
+
+            question: {
+                id: question.id,
+                text: question.text,
+                questionType: question.questionType,
+                points: question.points,
+                orderIndex: question.orderIndex,
+
+                options: question.options.map((o) => ({
+                    id: o.id,
+                    text: o.text,
+                })),
+            },
+
+            progress: {
+                current: index + 1,
+                total: session.quiz.questions.length,
+            },
+
+            timing: {
+                secondsPerQuestion:
+                    session.quiz.secondsPerQuestion,
+            },
+        };
+    }
+
+    async getCurrentQuestionForSession(
+        sessionId: string,
+    ) {
+        const session =
+            await this.prisma.quizSession.findUnique({
+                where: {
+                    id: sessionId,
+                },
+
+                include: {
+                    quiz: {
+                        include: {
+                            questions: {
+                                orderBy: {
+                                    orderIndex: 'asc',
+                                },
+
+                                include: {
+                                    options: {
+                                        orderBy: {
+                                            orderIndex: 'asc',
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            });
+
+        if (!session) {
+            throw new NotFoundException(
+                'Session not found',
+            );
+        }
+
+        if (session.status !== SessionStatus.active) {
+            throw new BadRequestException(
+                'Session is not active',
+            );
+        }
+
+        const index =
+            session.currentQuestionIndex ?? 0;
+
+        const question =
+            session.quiz.questions[index];
+
+        if (!question) {
+            throw new BadRequestException(
+                'No current question',
             );
         }
 
@@ -302,17 +416,53 @@ export class SessionsService {
             },
         });
 
-        await this.prisma.sessionParticipant.update({
-            where: { id: participant.id },
-            data: {
-                finalScore: {
-                    increment: earnedPoints,
+        const updatedParticipant =
+            await this.prisma.sessionParticipant.update({
+                where: { id: participant.id },
+                data: {
+                    finalScore: {
+                        increment: earnedPoints,
+                    },
                 },
-            },
-        });
+            });
 
         const isLastQuestion =
             index >= session.quiz.questions.length - 1;
+
+        if (session.mode === SessionMode.live_tournament) {
+            if (isLastQuestion) {
+                const finishedAt = new Date();
+
+                await this.prisma.sessionParticipant.update({
+                    where: {
+                        id: participant.id,
+                    },
+
+                    data: {
+                        finishedAt,
+                    },
+                });
+
+                const timeMs =
+                    session.startedAt
+                        ? finishedAt.getTime() -
+                        session.startedAt.getTime()
+                        : null;
+
+                await this.updateLeaderboard(
+                    userId,
+                    session.quizId,
+                    updatedParticipant.finalScore + earnedPoints,
+                    timeMs,
+                );
+            }
+
+            return {
+                correct: isCorrect,
+                earnedPoints,
+                waitingForNextQuestion: true,
+            };
+        }
 
         if (!isLastQuestion) {
             await this.prisma.quizSession.update({
@@ -330,31 +480,35 @@ export class SessionsService {
                 next: true,
             };
         }
+
+
+        const finishedAt = new Date();
+
         await this.prisma.quizSession.update({
             where: { id: sessionId },
             data: {
                 status: SessionStatus.finished,
-                endedAt: new Date(),
+                endedAt: finishedAt,
             },
         });
 
         await this.prisma.sessionParticipant.update({
             where: { id: participant.id },
             data: {
-                finishedAt: new Date(),
+                finishedAt,
             },
         });
 
         const timeMs =
-            participant.finishedAt && session.startedAt
-                ? participant.finishedAt.getTime() -
+            session.startedAt
+                ? finishedAt.getTime() -
                 session.startedAt.getTime()
                 : null;
 
         await this.updateLeaderboard(
             userId,
             session.quizId,
-            participant.finalScore + earnedPoints,
+            updatedParticipant.finalScore + earnedPoints,
             timeMs,
         );
 
@@ -362,6 +516,101 @@ export class SessionsService {
             correct: isCorrect,
             earnedPoints,
             finished: true,
+        };
+    }
+
+    async advanceSessionQuestion(
+        sessionId: string,
+    ) {
+        const session =
+            await this.prisma.quizSession.findUnique({
+                where: {
+                    id: sessionId,
+                },
+
+                include: {
+                    quiz: {
+                        include: {
+                            questions: {
+                                orderBy: {
+                                    orderIndex: 'asc',
+                                },
+                            },
+                        },
+                    },
+                },
+            });
+
+        if (!session) {
+            throw new NotFoundException(
+                'Session not found',
+            );
+        }
+        const current =
+            session.currentQuestionIndex ?? 0;
+
+        const isLastQuestion =
+            current >=
+            session.quiz.questions.length - 1;
+        if (isLastQuestion) {
+
+            const participants =
+                await this.prisma.sessionParticipant.findMany({
+                    where: {
+                        sessionId,
+                    },
+
+                    orderBy: [
+                        {
+                            finalScore: 'desc',
+                        },
+                        {
+                            finishedAt: 'asc',
+                        },
+                    ],
+                });
+
+            for (let i = 0; i < participants.length; i++) {
+                await this.prisma.sessionParticipant.update({
+                    where: {
+                        id: participants[i].id,
+                    },
+
+                    data: {
+                        finalPlace: i + 1,
+                    },
+                });
+            }
+
+            await this.prisma.quizSession.update({
+                where: {
+                    id: sessionId,
+                },
+
+                data: {
+                    status: SessionStatus.finished,
+                    endedAt: new Date(),
+                },
+            });
+
+            return {
+                finished: true,
+            };
+        }
+        await this.prisma.quizSession.update({
+            where: {
+                id: sessionId,
+            },
+
+            data: {
+                currentQuestionIndex: {
+                    increment: 1,
+                },
+            },
+        });
+
+        return {
+            finished: false,
         };
     }
 
@@ -518,6 +767,225 @@ export class SessionsService {
                     : existing.bestTimeMs,
             },
         });
+    }
+
+    async joinSession(
+        userId: string,
+        sessionId: string,
+    ) {
+        const session =
+            await this.prisma.quizSession.findUnique({
+                where: {
+                    id: sessionId,
+                },
+                include: {
+                    participants: true,
+                },
+            });
+
+        if (!session) {
+            throw new NotFoundException(
+                'Session not found',
+            );
+        }
+
+        if (session.mode === SessionMode.solo) {
+            throw new BadRequestException(
+                'Cannot join solo session',
+            );
+        }
+
+        if (session.status !== SessionStatus.waiting) {
+            throw new BadRequestException(
+                'Session already started',
+            );
+        }
+        const existing =
+            session.participants.find(
+                (p) => p.userId === userId,
+            );
+
+        if (existing) {
+            return existing;
+        }
+        return this.prisma.sessionParticipant.create({
+            data: {
+                sessionId,
+                userId,
+            },
+        });
+    }
+
+    async startSession(
+        userId: string,
+        sessionId: string,
+    ) {
+        const session =
+            await this.prisma.quizSession.findUnique({
+                where: {
+                    id: sessionId,
+                },
+                include: {
+                    participants: true,
+                    quiz: {
+                        include: {
+                            questions: true,
+                        },
+                    },
+                },
+            });
+
+        if (!session) {
+            throw new NotFoundException(
+                'Session not found',
+            );
+        }
+        if (session.hostUserId !== userId) {
+            throw new ForbiddenException(
+                'Only host can start session',
+            );
+        }
+        if (session.status !== SessionStatus.waiting) {
+            throw new BadRequestException(
+                'Session already started',
+            );
+        }
+        if (session.quiz.questions.length === 0) {
+            throw new BadRequestException(
+                'Quiz has no questions',
+            );
+        }
+        if (session.participants.length === 0) {
+            throw new BadRequestException(
+                'No participants',
+            );
+        }
+        return this.prisma.quizSession.update({
+            where: {
+                id: sessionId,
+            },
+            data: {
+                status: SessionStatus.active,
+                startedAt: new Date(),
+                currentQuestionIndex: 0,
+            },
+        });
+    }
+
+    async getLeaderboard(userId: string, sessionId: string) {
+        const session =
+            await this.prisma.quizSession.findUnique({
+                where: {
+                    id: sessionId,
+                },
+            });
+
+        if (!session) {
+            throw new NotFoundException(
+                'Session not found',
+            );
+        }
+
+        const participant =
+            await this.prisma.sessionParticipant.findFirst({
+                where: {
+                    sessionId,
+                    userId,
+                },
+            });
+
+        if (!participant) {
+            throw new ForbiddenException(
+                'Not a participant',
+            );
+        }
+
+        return this.prisma.sessionParticipant.findMany({
+            where: {
+                sessionId,
+            },
+
+            orderBy: [
+                {
+                    finalScore: 'desc',
+                },
+                {
+                    finishedAt: 'asc',
+                },
+            ],
+
+            select: {
+                finalScore: true,
+                finalPlace: true,
+                finishedAt: true,
+
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+            },
+        });
+    }
+
+
+
+    async getSession(sessionId: string) {
+        const session =
+            await this.prisma.quizSession.findUnique({
+                where: {
+                    id: sessionId,
+                },
+
+                include: {
+                    participants: true,
+                    quiz: true,
+                },
+            });
+
+        if (!session) {
+            throw new NotFoundException(
+                'Session not found',
+            );
+        }
+
+        return session;
+    }
+
+    async shouldAdvanceQuestion(
+        sessionId: string,
+        questionId: string,
+    ) {
+        const session =
+            await this.prisma.quizSession.findUnique({
+                where: {
+                    id: sessionId,
+                },
+
+                include: {
+                    participants: true,
+                },
+            });
+
+        if (!session) {
+            throw new NotFoundException(
+                'Session not found',
+            );
+        }
+        const participantsCount =
+            session.participants.length;
+        const answersCount =
+            await this.prisma.participantAnswer.count({
+                where: {
+                    questionId,
+
+                    participant: {
+                        sessionId,
+                    },
+                },
+            });
+        return answersCount >= participantsCount;
     }
 
     private normalize(str: string) {
