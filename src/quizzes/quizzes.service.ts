@@ -42,7 +42,14 @@ export class QuizzesService {
             where: {
                 visibility: 'public',
             },
-
+            include: {
+                author: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                }
+            },
             orderBy: {
                 createdAt: 'desc',
             },
