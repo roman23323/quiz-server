@@ -8,7 +8,6 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 import { PrismaService } from '../prisma/prisma.service';
-import { UsersService } from '../users/users.service';
 
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -17,12 +16,15 @@ import { LoginDto } from './dto/login.dto';
 export class AuthService {
   constructor(
     private prisma: PrismaService,
-    private usersService: UsersService,
     private jwtService: JwtService,
   ) {}
 
   async register(dto: RegisterDto) {
-    const existingUser = await this.usersService.findByName(dto.name);
+    const existingUser = await this.prisma.user.findUnique({
+      where: {
+        name: dto.name
+      }
+    });
 
     if (existingUser) {
       throw new BadRequestException('Username already exists');
@@ -41,7 +43,11 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const user = await this.usersService.findByName(dto.name);
+    const user = await this.prisma.user.findUnique({
+      where: {
+        name: dto.name
+      }
+    });
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
