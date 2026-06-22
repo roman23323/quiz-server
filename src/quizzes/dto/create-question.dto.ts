@@ -20,10 +20,10 @@ enum QuestionType {
 
 export class CreateQuestionDto {
   @IsString()
-  text: string;
+  text!: string;
 
   @IsEnum(QuestionType)
-  questionType: QuestionType;
+  questionType!: QuestionType;
 
   @IsOptional()
   @IsString()
@@ -31,11 +31,11 @@ export class CreateQuestionDto {
 
   @IsInt()
   @Min(1)
-  points: number;
+  points!: number;
 
   @IsInt()
   @Min(0)
-  orderIndex: number;
+  orderIndex!: number;
 
   @IsOptional()
   @IsArray()

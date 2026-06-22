@@ -16,16 +16,16 @@ enum QuizVisibility {
 export class CreateQuizDto {
   @IsString()
   @MaxLength(128)
-  title: string;
+  title!: string;
 
   @IsOptional()
   @IsString()
   description?: string;
 
   @IsEnum(QuizVisibility)
-  visibility: QuizVisibility;
+  visibility!: QuizVisibility;
 
   @IsInt()
   @Min(5)
-  secondsPerQuestion: number;
+  secondsPerQuestion!: number;
 }

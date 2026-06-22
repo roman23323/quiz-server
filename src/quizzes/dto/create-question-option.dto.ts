@@ -2,12 +2,12 @@ import { IsBoolean, IsInt, IsString, Min } from 'class-validator';
 
 export class CreateQuestionOptionDto {
   @IsString()
-  text: string;
+  text!: string;
 
   @IsBoolean()
-  isCorrect: boolean;
+  isCorrect!: boolean;
 
   @IsInt()
   @Min(0)
-  orderIndex: number;
+  orderIndex!: number;
 }

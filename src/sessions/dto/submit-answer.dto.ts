@@ -8,7 +8,7 @@ import {
 
 export class SubmitAnswerDto {
     @IsUUID()
-    questionId: string;
+    questionId!: string;
 
     @IsOptional()
     @IsUUID()
@@ -20,5 +20,5 @@ export class SubmitAnswerDto {
 
     @IsInt()
     @Min(0)
-    responseTimeMs: number;
+    responseTimeMs!: number;
 }
