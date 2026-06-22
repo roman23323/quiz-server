@@ -32,5 +32,6 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./
+COPY prisma.config.ts ./prisma.config.ts
 
 CMD ["bun", "run", "start:prod"]
