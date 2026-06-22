@@ -58,7 +58,7 @@ model Quiz {
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 
-  author              User @relation(fields: [authorId], references: [id])
+  author              User @relation(fields: [authorId], references: [id], onDelete: Cascade)
 
   questions           QuizQuestion[]
   sessions            QuizSession[]
@@ -79,7 +79,7 @@ model QuizQuestion {
   points         Int
   orderIndex     Int @map("order_index")
 
-  quiz           Quiz @relation(fields: [quizId], references: [id])
+  quiz           Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
   options         QuestionOption[]
   answers         ParticipantAnswer[]
@@ -96,7 +96,7 @@ model QuestionOption {
 
   orderIndex    Int @map("order_index")
 
-  question      QuizQuestion @relation(fields: [questionId], references: [id])
+  question      QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   selectedAnswers ParticipantAnswer[]
 
@@ -121,8 +121,8 @@ model QuizSession {
 
   createdAt             DateTime @default(now()) @map("created_at")
 
-  quiz                  Quiz @relation(fields: [quizId], references: [id])
-  hostUser              User @relation(fields: [hostUserId], references: [id])
+  quiz                  Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  hostUser              User @relation(fields: [hostUserId], references: [id], onDelete: Cascade)
 
   participants          SessionParticipant[]
 
@@ -144,8 +144,8 @@ model SessionParticipant {
 
   finishedAt      DateTime? @map("finished_at")
 
-  session         QuizSession @relation(fields: [sessionId], references: [id])
-  user            User @relation(fields: [userId], references: [id])
+  session         QuizSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   answers         ParticipantAnswer[]
 
@@ -168,11 +168,11 @@ model ParticipantAnswer {
   answeredAt          DateTime @default(now()) @map("answered_at")
   responseTimeMs      Int @map("response_time_ms")
 
-  participant         SessionParticipant @relation(fields: [participantId], references: [id])
+  participant         SessionParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
-  question            QuizQuestion @relation(fields: [questionId], references: [id])
+  question            QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
-  selectedOption      QuestionOption? @relation(fields: [selectedOptionId], references: [id])
+  selectedOption      QuestionOption? @relation(fields: [selectedOptionId], references: [id], onDelete: Cascade)
 
   @@map("participant_answers")
 }
@@ -190,8 +190,8 @@ model QuizLeaderboard {
 
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  quiz            Quiz @relation(fields: [quizId], references: [id])
-  user            User @relation(fields: [userId], references: [id])
+  quiz            Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([quizId, userId])
 
