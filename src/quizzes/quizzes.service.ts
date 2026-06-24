@@ -25,6 +25,26 @@ export class QuizzesService {
         });
     }
 
+    async deleteQuiz(quizId: string, userId: string, userRole?: string) {
+        const quiz = await this.prisma.quiz.findUnique({
+            where: {
+                id: quizId,
+            },
+        });
+
+        if (!quiz) {
+            throw new NotFoundException('Quiz not found');
+        }
+
+        if (quiz.authorId !== userId && userRole !== 'ADMIN') {
+            throw new ForbiddenException('You are not author');
+        }
+
+        return this.prisma.quiz.delete({
+            where: { id: quizId }
+        })
+    }
+
     async findMyQuizzes(userId: string) {
         return this.prisma.quiz.findMany({
             where: {
@@ -59,6 +79,7 @@ export class QuizzesService {
     async update(
         quizId: string,
         userId: string,
+        userRole: string | undefined,
         dto: UpdateQuizDto,
     ) {
         const quiz = await this.prisma.quiz.findUnique({
@@ -71,7 +92,7 @@ export class QuizzesService {
             throw new NotFoundException('Quiz not found');
         }
 
-        if (quiz.authorId !== userId) {
+        if (quiz.authorId !== userId && userRole !== 'ADMIN') {
             throw new ForbiddenException();
         }
 
@@ -89,23 +110,97 @@ export class QuizzesService {
         });
     }
 
-    async addQuestion(
-        quizId: string,
-        userId: string,
-        dto: CreateQuestionDto,
-    ) {
-        const quiz = await this.prisma.quiz.findUnique({
-            where: {
-                id: quizId,
-            },
-        });
+    private async ensureQuizAndAuthor(quizId: string, userId: string, userRole?: string) {
+        const quiz = await this.prisma.quiz.findUnique({ where: { id: quizId } });
 
         if (!quiz) {
             throw new NotFoundException('Quiz not found');
         }
 
-        if (quiz.authorId !== userId) {
+        if (quiz.authorId !== userId && userRole !== 'ADMIN') {
             throw new ForbiddenException();
+        }
+
+        return quiz;
+    }
+
+    async createQuestion(
+        quizId: string,
+        userId: string,
+        dto: CreateQuestionDto,
+        userRole: string | undefined,
+    ) {
+        await this.ensureQuizAndAuthor(quizId, userId, userRole);
+
+        if (
+            dto.questionType === 'single_choice' &&
+            (!dto.options || dto.options.length === 0)
+        ) {
+            throw new BadRequestException(
+                'Single choice question must contain options',
+            );
+        }
+
+        if (
+            dto.questionType === 'text' &&
+            !dto.correctAnswer
+        ) {
+            throw new BadRequestException(
+                'Text question must contain correctAnswer',
+            );
+        }
+
+        const optionsCreate = dto.options
+            ? dto.options.map((option) => ({
+                  text: option.text,
+                  isCorrect: option.isCorrect,
+                  orderIndex: option.orderIndex,
+              }))
+            : undefined;
+
+        return this.prisma.quizQuestion.create({
+            data: {
+                quizId,
+
+                text: dto.text,
+
+                questionType: dto.questionType,
+
+                correctAnswer: dto.correctAnswer,
+
+                points: dto.points,
+
+                orderIndex: dto.orderIndex,
+
+                options: optionsCreate
+                    ? {
+                          create: optionsCreate,
+                      }
+                    : undefined,
+            },
+
+            include: {
+                options: true,
+            },
+        });
+    }
+
+    async updateQuestion(
+        quizId: string,
+        userId: string,
+        userRole: string | undefined,
+        dto: CreateQuestionDto,
+    ) {
+        await this.ensureQuizAndAuthor(quizId, userId, userRole);
+
+        const existingById = await this.prisma.quizQuestion.findUnique({ where: { id: dto.id } });
+
+        if (!existingById) {
+            throw new NotFoundException('Question not found');
+        }
+
+        if (existingById.quizId !== quizId) {
+            throw new BadRequestException('Question does not belong to this quiz');
         }
 
         if (
@@ -126,38 +221,34 @@ export class QuizzesService {
             );
         }
 
-        return this.prisma.quizQuestion.create({
+        const optionsCreate = dto.options
+            ? dto.options.map((option) => ({
+                  text: option.text,
+                  isCorrect: option.isCorrect,
+                  orderIndex: option.orderIndex,
+              }))
+            : undefined;
+
+        return this.prisma.quizQuestion.update({
+            where: { id: dto.id },
             data: {
-                quizId,
-
                 text: dto.text,
-
                 questionType: dto.questionType,
-
                 correctAnswer: dto.correctAnswer,
-
                 points: dto.points,
-
                 orderIndex: dto.orderIndex,
-
-                options: dto.options
+                options: optionsCreate
                     ? {
-                        create: dto.options.map((option) => ({
-                            text: option.text,
-                            isCorrect: option.isCorrect,
-                            orderIndex: option.orderIndex,
-                        })),
-                    }
+                          deleteMany: {},
+                          create: optionsCreate,
+                      }
                     : undefined,
             },
-
-            include: {
-                options: true,
-            },
+            include: { options: true },
         });
     }
 
-    async findOneForEdit(quizId: string, userId: string) {
+    async findOneForEdit(quizId: string, userId: string, userRole?: string) {
         const quiz = await this.prisma.quiz.findUnique({
             where: {
                 id: quizId,
@@ -184,7 +275,7 @@ export class QuizzesService {
             throw new NotFoundException('Quiz not found');
         }
 
-        if (quiz.authorId !== userId) {
+        if (quiz.authorId !== userId && userRole !== 'ADMIN') {
             throw new ForbiddenException();
         }
 

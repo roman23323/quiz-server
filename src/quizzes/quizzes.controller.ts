@@ -1,6 +1,7 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
     Param,
     Patch,
@@ -32,6 +33,15 @@ export class QuizzesController {
     }
 
     @UseGuards(JwtAuthGuard)
+    @Delete(':id')
+    deleteQuiz(
+        @CurrentUser() user: any,
+        @Param('id') quizId: string
+    ) {
+        return this.quizzesService.deleteQuiz(quizId, user.id, user.role);
+    }
+
+    @UseGuards(JwtAuthGuard)
     @Get('my')
     getMyQuizzes(@CurrentUser() user: any) {
         return this.quizzesService.findMyQuizzes(user.id);
@@ -52,20 +62,40 @@ export class QuizzesController {
         return this.quizzesService.update(
             quizId,
             user.id,
+            user.role,
             dto
         )
     }
 
     @UseGuards(JwtAuthGuard)
     @Post(':id/questions')
-    addQuestion(
+    createQuestion(
         @Param('id') quizId: string,
         @CurrentUser() user: any,
         @Body() dto: CreateQuestionDto,
     ) {
-        return this.quizzesService.addQuestion(
+        return this.quizzesService.createQuestion(
             quizId,
             user.id,
+            dto,
+            user.role,
+        );
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Patch(':id/questions/:questionId')
+    updateQuestion(
+        @Param('id') quizId: string,
+        @Param('questionId') questionId: string,
+        @CurrentUser() user: any,
+        @Body() dto: CreateQuestionDto,
+    ) {
+        dto.id = questionId;
+
+        return this.quizzesService.updateQuestion(
+            quizId,
+            user.id,
+            user.role,
             dto,
         );
     }
@@ -79,6 +109,7 @@ export class QuizzesController {
         return this.quizzesService.findOneForEdit(
             quizId,
             user.id,
+            user.role,
         );
     }
 

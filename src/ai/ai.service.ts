@@ -102,7 +102,7 @@ export class AiService implements OnModuleInit {
         for (const q of questions) {
             await this.retry(
                 async () => {
-                    return this.quizzesService.addQuestion(
+                    return this.quizzesService.createQuestion(
                         quiz.id,
                         userId,
                         {
@@ -112,6 +112,7 @@ export class AiService implements OnModuleInit {
                             orderIndex: q.orderIndex,
                             options: q.options,
                         },
+                        undefined
                     );
                 },
                 3,
