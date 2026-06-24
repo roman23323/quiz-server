@@ -39,7 +39,10 @@ export class AuthService {
       },
     });
 
-    return this.generateToken(user.id);
+    return {
+      token: await this.generateToken(user),
+      user: { id: user.id, name: user.name, isGuest: user.isGuest, role: user.role }
+    };
   }
 
   async login(dto: LoginDto) {
@@ -63,18 +66,19 @@ export class AuthService {
     }
 
     return {
-      token: await this.generateToken(user.id),
+      token: await this.generateToken(user),
       user: {
         id: user.id,
         name: user.name,
-        isGuest: user.isGuest
+        isGuest: user.isGuest,
+        role: user.role,
       }
     };
   }
-
-  private async generateToken(userId: string) {
+  private async generateToken(user: any) {
     const payload = {
-      sub: userId,
+      sub: user.id,
+      role: user.role,
     };
 
     return await this.jwtService.signAsync(payload);
