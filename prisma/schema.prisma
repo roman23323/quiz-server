@@ -12,6 +12,11 @@ enum QuizVisibility {
   unlisted
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 enum QuestionType {
   single_choice
   text
@@ -35,6 +40,8 @@ model User {
   name          String   @unique
   passwordHash  String   @map("password_hash")
   isGuest       Boolean  @default(false) @map("is_guest")
+  role          Role     @default(USER)
+  
   createdAt     DateTime @default(now()) @map("created_at")
 
   quizzes            Quiz[]
