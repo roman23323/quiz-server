@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 
 import { JwtService } from '@nestjs/jwt';
@@ -20,6 +21,12 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
+    if (typeof dto.name === 'string' && dto.name.indexOf('\0') !== -1) {
+      throw new BadRequestException('Invalid characters in name');
+    }
+    if (typeof dto.password === 'string' && dto.password.indexOf('\0') !== -1) {
+      throw new BadRequestException('Invalid characters in password');
+    }
     const existingUser = await this.prisma.user.findUnique({
       where: {
         name: dto.name
@@ -46,6 +53,12 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
+    if (typeof dto.name === 'string' && dto.name.indexOf('\0') !== -1) {
+      throw new BadRequestException('Invalid characters in name');
+    }
+    if (typeof dto.password === 'string' && dto.password.indexOf('\0') !== -1) {
+      throw new BadRequestException('Invalid characters in password');
+    }
     const user = await this.prisma.user.findUnique({
       where: {
         name: dto.name
