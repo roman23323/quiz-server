@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -12,6 +12,7 @@ import { RedisModule } from './redis/redis.module';
 import { BullModule } from '@nestjs/bullmq';
 import { WorkersModule } from './workers/workers.module';
 import { AiModule } from './ai/ai.module';
+import { NullByteProtectorMiddleware } from './common/middleware/null-byte-protector.middleware';
 
 @Module({
   imports: [
@@ -50,4 +51,10 @@ import { AiModule } from './ai/ai.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(NullByteProtectorMiddleware)
+      .forRoutes('*');
+  }
+}
