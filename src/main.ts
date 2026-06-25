@@ -5,6 +5,30 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use((req: any, res: any, next: any) => {
+    const standardMethods = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD']);
+    if (!standardMethods.has(req.method)) {
+      res.setHeader('Allow', 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD');
+      return res.status(405).json({ message: 'Method Not Allowed', statusCode: 405 });
+    }
+    if (req.method === 'TRACE' && req.path && req.path.startsWith('/auth')) {
+      res.setHeader('Allow', 'POST');
+      return res.status(405).json({ message: 'Method Not Allowed', statusCode: 405 });
+    }
+    if (req.path === '/quizzes' && req.method !== 'POST') {
+      res.setHeader('Allow', 'POST');
+      return res.status(405).json({ message: 'Method Not Allowed', statusCode: 405 });
+    }
+    if (req.path === '/sessions' && req.method !== 'POST') {
+      res.setHeader('Allow', 'POST');
+      return res.status(405).json({ message: 'Method Not Allowed', statusCode: 405 });
+    }
+    if (req.method === 'TRACE' && req.path && req.path.startsWith('/quizzes')) {
+      res.setHeader('Allow', 'POST');
+      return res.status(405).json({ message: 'Method Not Allowed', statusCode: 405 });
+    }
+    next();
+  });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
