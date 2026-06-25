@@ -1,0 +1,1098 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          },
+          "409": {
+            "description": "Conflict - username exists"
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authenticated"
+          },
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/users/me": {
+      "get": {
+        "operationId": "UsersController_getMe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Users"
+        ]
+      },
+      "patch": {
+        "operationId": "UsersController_updateUser",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Users"
+        ]
+      },
+      "delete": {
+        "operationId": "UsersController_deleteUser",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "operationId": "UsersController_getUser",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/quizzes": {
+      "post": {
+        "operationId": "QuizzesController_createQuiz",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQuizDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "links": {
+              "GetQuizForEditLink": {
+                "operationId": "QuizzesController_getQuizForEdit",
+                "parameters": {
+                  "id": "$response.body#/id"
+                }
+              },
+              "GetQuizForPlayLink": {
+                "operationId": "QuizzesController_getQuizForPlay",
+                "parameters": {
+                  "id": "$response.body#/id"
+                }
+              },
+              "UpdateQuizLink": {
+                "operationId": "QuizzesController_updateQuiz",
+                "parameters": {
+                  "id": "$response.body#/id"
+                }
+              },
+              "DeleteQuizLink": {
+                "operationId": "QuizzesController_deleteQuiz",
+                "parameters": {
+                  "id": "$response.body#/id"
+                }
+              },
+              "CreateQuestionLink": {
+                "operationId": "QuizzesController_createQuestion",
+                "parameters": {
+                  "id": "$response.body#/id"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Quizzes"
+        ]
+      }
+    },
+    "/quizzes/my": {
+      "get": {
+        "operationId": "QuizzesController_getMyQuizzes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Quizzes"
+        ]
+      }
+    },
+    "/quizzes/public": {
+      "get": {
+        "operationId": "QuizzesController_getPublicQuizzes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Quizzes"
+        ]
+      }
+    },
+    "/quizzes/{id}": {
+      "patch": {
+        "operationId": "QuizzesController_updateQuiz",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateQuizDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Quizzes"
+        ]
+      },
+      "delete": {
+        "operationId": "QuizzesController_deleteQuiz",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Quizzes"
+        ]
+      }
+    },
+    "/quizzes/{id}/questions": {
+      "post": {
+        "operationId": "QuizzesController_createQuestion",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQuestionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "links": {
+              "CreateSessionLink": {
+                "operationId": "SessionsController_createSession",
+                "requestBody": {
+                  "quizId": "$request.path.id"
+                }
+              },
+              "UpdateQuestionLink": {
+                "operationId": "QuizzesController_updateQuestion",
+                "parameters": {
+                  "id": "$request.path.id",
+                  "questionId": "$response.body#/id"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Quizzes"
+        ]
+      }
+    },
+    "/quizzes/{id}/questions/{questionId}": {
+      "patch": {
+        "operationId": "QuizzesController_updateQuestion",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+            }
+          },
+          {
+            "name": "questionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateQuestionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Quizzes"
+        ]
+      }
+    },
+    "/quizzes/{id}/edit": {
+      "get": {
+        "operationId": "QuizzesController_getQuizForEdit",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Quizzes"
+        ]
+      }
+    },
+    "/quizzes/{id}/play": {
+      "get": {
+        "operationId": "QuizzesController_getQuizForPlay",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Quizzes"
+        ]
+      }
+    },
+    "/sessions": {
+      "post": {
+        "operationId": "SessionsController_createSession",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSessionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "links": {
+              "GetCurrentQuestionLink": {
+                "operationId": "SessionsController_getCurrentQuestion",
+                "parameters": {
+                  "id": "$response.body#/id"
+                }
+              },
+              "SubmitAnswerLink": {
+                "operationId": "SessionsController_submitAnswer",
+                "parameters": {
+                  "id": "$response.body#/id"
+                }
+              },
+              "GetResultLink": {
+                "operationId": "SessionsController_getResult",
+                "parameters": {
+                  "id": "$response.body#/id"
+                }
+              },
+              "GetLeaderboardLink": {
+                "operationId": "SessionsController_getLeaderboard",
+                "parameters": {
+                  "id": "$response.body#/id"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "links": {
+              "GetCurrentQuestionLink": {
+                "operationId": "SessionsController_getCurrentQuestion",
+                "parameters": {
+                  "id": "$response.body#/id"
+                }
+              },
+              "SubmitAnswerLink": {
+                "operationId": "SessionsController_submitAnswer",
+                "parameters": {
+                  "id": "$response.body#/id"
+                }
+              },
+              "GetResultLink": {
+                "operationId": "SessionsController_getResult",
+                "parameters": {
+                  "id": "$response.body#/id"
+                }
+              },
+              "GetLeaderboardLink": {
+                "operationId": "SessionsController_getLeaderboard",
+                "parameters": {
+                  "id": "$response.body#/id"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/sessions/{id}/current-question": {
+      "get": {
+        "operationId": "SessionsController_getCurrentQuestion",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "session ID",
+            "schema": {
+              "format": "uuid",
+              "example": "123e4567-e88b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/sessions/{id}/answer": {
+      "post": {
+        "operationId": "SessionsController_submitAnswer",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "session ID",
+            "schema": {
+              "format": "uuid",
+              "example": "123e4567-e88b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitAnswerDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/sessions/{id}/result": {
+      "get": {
+        "operationId": "SessionsController_getResult",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "session ID",
+            "schema": {
+              "format": "uuid",
+              "example": "123e4567-e88b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/sessions/{id}/leaderboard": {
+      "get": {
+        "operationId": "SessionsController_getLeaderboard",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "session ID",
+            "schema": {
+              "format": "uuid",
+              "example": "123e4567-e88b-12d3-a456-426614174000",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          }
+        },
+        "tags": [
+          "Sessions"
+        ]
+      }
+    },
+    "/ai/generate-quiz": {
+      "post": {
+        "operationId": "AiController_generateQuizFromAi",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "405": {
+            "description": "Method Not Allowed"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "description": "Service Unavailable"
+          }
+        },
+        "tags": [
+          "Ai"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Quiz API",
+    "description": "API docs for the Quiz server",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "jwt": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 32,
+            "pattern": "^[^\\u0000]*$"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 6,
+            "maxLength": 128,
+            "pattern": "^[^\\u0000]*$"
+          }
+        },
+        "required": [
+          "name",
+          "password"
+        ],
+        "additionalProperties": false
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[^\\u0000]*$"
+          },
+          "password": {
+            "type": "string",
+            "pattern": "^[^\\u0000]*$"
+          }
+        },
+        "required": [
+          "name",
+          "password"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateUserDTO": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "CreateQuizDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "maxLength": 128,
+            "pattern": "^[^\u0000]*$",
+            "description": " (Must not contain null bytes)"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^[^\u0000]*$",
+            "description": " (Must not contain null bytes)"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private",
+              "unlisted"
+            ],
+            "default": "public",
+            "pattern": "^[^\u0000]*$",
+            "description": " (Must not contain null bytes)"
+          },
+          "secondsPerQuestion": {
+            "type": "integer",
+            "minimum": 5,
+            "maximum": 1000
+          }
+        },
+        "required": [
+          "title",
+          "visibility",
+          "secondsPerQuestion"
+        ],
+        "additionalProperties": false
+      },
+      "UpdateQuizDto": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "CreateQuestionOptionDto": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "pattern": "^[^\u0000]*$",
+            "description": " (Must not contain null bytes)"
+          },
+          "isCorrect": {
+            "type": "boolean"
+          },
+          "orderIndex": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 6
+          }
+        },
+        "required": [
+          "text",
+          "isCorrect",
+          "orderIndex"
+        ],
+        "additionalProperties": false
+      },
+      "CreateQuestionDto": {
+        "type": "object",
+        "required": [
+          "text",
+          "questionType",
+          "points",
+          "orderIndex"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[^\u0000]*$",
+            "description": " (Must not contain null bytes)"
+          },
+          "text": {
+            "type": "string",
+            "pattern": "^[^\u0000]*$",
+            "description": " (Must not contain null bytes)"
+          },
+          "questionType": {
+            "type": "string",
+            "enum": [
+              "single_choice",
+              "text"
+            ],
+            "pattern": "^[^\u0000]*$",
+            "description": " (Must not contain null bytes)"
+          },
+          "points": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "orderIndex": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 50
+          }
+        },
+        "additionalProperties": false,
+        "oneOf": [
+          {
+            "description": "Вариант для одиночного выбора (single_choice)",
+            "properties": {
+              "questionType": {
+                "enum": [
+                  "single_choice"
+                ]
+              },
+              "correctAnswer": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "questionType",
+              "correctAnswer"
+            ]
+          },
+          {
+            "description": "Вариант для текстового ответа (text)",
+            "properties": {
+              "questionType": {
+                "enum": [
+                  "text"
+                ]
+              },
+              "options": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/CreateQuestionOptionDto"
+                }
+              }
+            },
+            "required": [
+              "questionType",
+              "options"
+            ]
+          }
+        ]
+      },
+      "CreateSessionDto": {
+        "type": "object",
+        "properties": {
+          "quizId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "solo",
+              "leaderboard",
+              "live_tournament"
+            ],
+            "pattern": "^[^\u0000]*$",
+            "description": " (Must not contain null bytes)"
+          }
+        },
+        "required": [
+          "quizId",
+          "mode"
+        ],
+        "additionalProperties": false
+      },
+      "SubmitAnswerDto": {
+        "type": "object",
+        "properties": {
+          "questionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "selectedOptionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "textAnswer": {
+            "type": "string",
+            "pattern": "^[^\u0000]*$",
+            "description": " (Must not contain null bytes)"
+          },
+          "responseTimeMs": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1000
+          }
+        },
+        "required": [
+          "questionId",
+          "responseTimeMs"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}
