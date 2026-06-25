@@ -1,4 +1,4 @@
-import { IsBoolean, IsInt, IsString, Min } from 'class-validator';
+import { IsBoolean, IsInt, IsString, Max, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateQuestionOptionDto {
@@ -10,8 +10,9 @@ export class CreateQuestionOptionDto {
   @IsBoolean()
   isCorrect!: boolean;
 
-  @ApiProperty({ minimum: 0 })
+  @ApiProperty({ minimum: 0, maximum: 6, type: 'integer' })
   @IsInt()
   @Min(0)
+  @Max(6)
   orderIndex!: number;
 }

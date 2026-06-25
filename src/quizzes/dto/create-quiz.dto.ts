@@ -3,6 +3,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -20,17 +21,18 @@ export class CreateQuizDto {
   @MaxLength(128)
   title!: string;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, nullable: true })
   @IsOptional()
   @IsString()
   description?: string;
 
-  @ApiProperty({ enum: QuizVisibility })
+  @ApiProperty({ enum: QuizVisibility, default: QuizVisibility.public })
   @IsEnum(QuizVisibility)
   visibility!: QuizVisibility;
 
-  @ApiProperty({ minimum: 5 })
+  @ApiProperty({ minimum: 5, maximum: 1000, type: 'integer' })
   @IsInt()
   @Min(5)
+  @Max(1000)
   secondsPerQuestion!: number;
 }

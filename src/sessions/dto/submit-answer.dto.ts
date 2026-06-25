@@ -3,6 +3,7 @@ import {
     IsOptional,
     IsString,
     IsUUID,
+    Max,
     Min,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
@@ -22,8 +23,9 @@ export class SubmitAnswerDto {
     @IsString()
     textAnswer?: string;
 
-    @ApiProperty({ minimum: 0 })
+    @ApiProperty({ minimum: 0, maximum: 1000, type: 'integer' })
     @IsInt()
     @Min(0)
+    @Max(1000)
     responseTimeMs!: number;
 }

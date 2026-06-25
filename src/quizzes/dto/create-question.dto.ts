@@ -5,6 +5,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Max,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -38,14 +39,16 @@ export class CreateQuestionDto {
   @IsString()
   correctAnswer?: string;
 
-  @ApiProperty({ minimum: 1 })
+  @ApiProperty({ minimum: 1, maximum: 100, type: 'integer' })
   @IsInt()
   @Min(1)
+  @Max(100)
   points!: number;
 
-  @ApiProperty({ minimum: 0 })
+  @ApiProperty({ minimum: 0, maximum: 50, type: 'integer' })
   @IsInt()
   @Min(0)
+  @Max(50)
   orderIndex!: number;
 
   @ApiProperty({ type: () => CreateQuestionOptionDto, isArray: true, required: false, minItems: 1 })
