@@ -10,6 +10,12 @@ import { CreateQuestionDto } from './dto/create-question.dto';
 export class QuizzesService {
     constructor(private prisma: PrismaService) { }
 
+    private isValidUuid(id: string) {
+        if (!id || typeof id !== 'string') return false;
+        const uuidRe = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
+        return uuidRe.test(id);
+    }
+
     async create(authorId: string, dto: CreateQuizDto) {
         return this.prisma.quiz.create({
             data: {
@@ -249,6 +255,9 @@ export class QuizzesService {
     }
 
     async findOneForEdit(quizId: string, userId: string, userRole?: string) {
+        if (!this.isValidUuid(quizId)) {
+            throw new BadRequestException('Invalid id');
+        }
         const quiz = await this.prisma.quiz.findUnique({
             where: {
                 id: quizId,
@@ -283,6 +292,9 @@ export class QuizzesService {
     }
 
     async findOneForPlay(quizId: string) {
+        if (!this.isValidUuid(quizId)) {
+            throw new BadRequestException('Invalid id');
+        }
         const quiz = await this.prisma.quiz.findUnique({
             where: {
                 id: quizId,
