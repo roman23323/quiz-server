@@ -23,9 +23,9 @@ export class SubmitAnswerDto {
     @IsString()
     textAnswer?: string;
 
-    @ApiProperty({ minimum: 0, maximum: 1000, type: 'integer' })
+    @ApiProperty({ minimum: 0, maximum: 1000000, type: 'integer' })
     @IsInt()
     @Min(0)
-    @Max(1000)
+    @Max(1000000)
     responseTimeMs!: number;
 }
