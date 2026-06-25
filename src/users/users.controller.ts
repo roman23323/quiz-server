@@ -52,4 +52,24 @@ export class UsersController {
     ) {
         return this.usersService.deleteUser(user.id);
     }
+
+    @All('me')
+    @ApiExcludeEndpoint()
+    handleInvalidMethodsMe(@Req() req: any, @Res() res: any) {
+        const allowed = 'GET, PATCH, DELETE';
+        if (req.method !== 'GET' && req.method !== 'PATCH' && req.method !== 'DELETE') {
+            res.setHeader('Allow', allowed);
+            return res.status(405).json({ message: 'Method Not Allowed', statusCode: 405 });
+        }
+    }
+
+    @All(':id')
+    @ApiExcludeEndpoint()
+    handleInvalidMethodsId(@Req() req: any, @Res() res: any) {
+        const allowed = 'GET';
+        if (req.method !== 'GET') {
+            res.setHeader('Allow', allowed);
+            return res.status(405).json({ message: 'Method Not Allowed', statusCode: 405 });
+        }
+    }
 }
