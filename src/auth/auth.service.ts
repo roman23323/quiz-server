@@ -1,5 +1,5 @@
 import {
-  BadRequestException,
+  ConflictException,
   Injectable,
   UnauthorizedException,
   BadRequestException,
@@ -34,7 +34,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new BadRequestException('Username already exists');
+      throw new ConflictException('Username already exists');
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
