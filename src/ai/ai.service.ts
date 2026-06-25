@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, ServiceUnavailableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import GigaChat from 'gigachat';
 import { QuizzesService } from '../quizzes/quizzes.service';
@@ -88,7 +88,12 @@ export class AiService implements OnModuleInit {
     }
 
     async generateAndSaveQuiz(topic: string, userId: string) {
-        const aiResult = await this.generateQuiz(topic);
+        let aiResult;
+        try {
+            aiResult = await this.generateQuiz(topic);
+        } catch (error) {
+            throw new ServiceUnavailableException('AI service unavailable');
+        }
 
         const { settings, questions } = aiResult;
 
